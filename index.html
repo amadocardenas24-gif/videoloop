@@ -474,6 +474,61 @@
             display: none;
         }
 
+        /* Video fijo en pantalla */
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1003;
+        }
+
+        .video-container {
+            width: 90%;
+            max-width: 900px;
+            background: black;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 3px solid #4ECDC4;
+            position: relative;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .close-video-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B6B, #FFE66D);
+            border: 2px solid white;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1004;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .close-video-btn:hover {
+            transform: scale(1.1);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .language-title {
@@ -513,6 +568,11 @@
             .instruction-icon {
                 font-size: 3rem;
             }
+            
+            .video-container {
+                width: 95%;
+                border-radius: 15px;
+            }
         }
 
         @media (max-height: 700px) {
@@ -540,6 +600,10 @@
             
             .instructions-container {
                 height: 120px;
+            }
+            
+            .video-container {
+                max-width: 800px;
             }
         }
     </style>
@@ -645,6 +709,16 @@
         </div>
     </div>
 
+    <!-- Video fijo en pantalla -->
+    <div class="video-overlay" id="videoOverlay">
+        <div class="video-container">
+            <video id="overlayVideo" loop muted playsinline webkit-playsinline>
+                Tu navegador no soporta video HTML5.
+            </video>
+            <button class="close-video-btn" id="closeVideoBtn">✕</button>
+        </div>
+    </div>
+
     <!-- Escena AR -->
     <div id="ar-scene">
         <!-- La escena A-Frame se insertará aquí dinámicamente -->
@@ -691,7 +765,10 @@
                     noCamera: "No se encontró ninguna cámara.",
                     notSupported: "Tu navegador no soporta acceso a la cámara.",
                     unknown: "Error desconocido: "
-                }
+                },
+                // Nuevos textos para video overlay
+                closeVideo: "Cerrar video",
+                videoPlaying: "Video reproduciéndose..."
             },
             
             en: {
@@ -731,7 +808,10 @@
                     noCamera: "No camera found.",
                     notSupported: "Your browser doesn't support camera access.",
                     unknown: "Unknown error: "
-                }
+                },
+                // New texts for video overlay
+                closeVideo: "Close video",
+                videoPlaying: "Video playing..."
             },
             
             pt: {
@@ -760,7 +840,7 @@
                 // Instruções AR
                 arInstruction: "Mova-se lentamente sobre o marcador",
                 
-                // Botões e mensagens
+                // Botões e mensajes
                 soundOff: "🔇",
                 soundOn: "🔊",
                 processing: "PROCESSANDO...",
@@ -771,7 +851,10 @@
                     noCamera: "Nenhuma câmera encontrada.",
                     notSupported: "Seu navegador não suporta acesso à câmera.",
                     unknown: "Erro desconhecido: "
-                }
+                },
+                // Novos textos para video overlay
+                closeVideo: "Fechar vídeo",
+                videoPlaying: "Vídeo reproduzindo..."
             }
         };
         
@@ -1034,7 +1117,7 @@
                 // Crear escena A-Frame
                 arScene.innerHTML = `
                     <a-scene 
-                        mindar-image="imageTargetSrc: ./marker.mind; autoStart: true; uiScanning: no; uiLoading: no; uiError: no; hideAll: false;" 
+                        mindar-image="imageTargetSrc: ./marker.mind; autoStart: true; uiScanning: no; uiLoading: no; uiError: no;" 
                         vr-mode-ui="enabled: false"
                         device-orientation-permission-ui="enabled: false"
                         permission-ui="enabled: false"
@@ -1079,6 +1162,12 @@
                     </a-scene>
                 `;
                 
+                // Configurar el video overlay
+                const overlayVideo = document.getElementById('overlayVideo');
+                overlayVideo.src = './asset.mp4';
+                overlayVideo.loop = true;
+                overlayVideo.muted = true;
+                
                 // Mostrar escena AR
                 setTimeout(() => {
                     arScene.style.display = 'block';
@@ -1110,16 +1199,12 @@
             }, 500);
         }
         
-        // Variables globales para controlar el video persistente
-        let videoPlane = null;
-        let videoEntity = null;
-        let isVideoDetached = false;
-        let lastKnownPosition = null;
-        let lastKnownRotation = null;
-        
         // Configurar eventos AR
         function setupAREvents() {
             const soundToggle = document.getElementById('soundToggle');
+            const videoOverlay = document.getElementById('videoOverlay');
+            const overlayVideo = document.getElementById('overlayVideo');
+            const closeVideoBtn = document.getElementById('closeVideoBtn');
             const t = translations[currentLang];
             let isMuted = true;
             
@@ -1130,13 +1215,9 @@
                 if (arTarget && video) {
                     clearInterval(checkInterval);
                     
-                    // Guardar referencia al plano de video
-                    videoPlane = document.querySelector('#ar-target a-plane');
-                    videoEntity = video;
-                    
                     // Evento cuando se encuentra el marcador
                     arTarget.addEventListener('targetFound', () => {
-                        console.log('Marcador detectado');
+                        console.log('Marcador detectado - Reproduciendo video AR');
                         
                         // Mostrar botón de sonido
                         soundToggle.style.display = 'flex';
@@ -1150,54 +1231,46 @@
                         // Asegurar loop continuo
                         video.loop = true;
                         
-                        // Si el video termina, reiniciar automáticamente
+                        // Guardar el tiempo actual del video
+                        const currentTime = video.currentTime;
+                        
+                        // Configurar el video overlay para que esté sincronizado
+                        overlayVideo.currentTime = currentTime;
+                        
+                        // Escuchar cuando el video termine
                         video.addEventListener('ended', () => {
-                            console.log('Video terminado, reiniciando...');
+                            console.log('Video AR terminado, reiniciando...');
                             video.currentTime = 0;
                             video.play();
                         });
-                        
-                        // Si el video fue separado anteriormente, reanclarlo al marcador
-                        if (isVideoDetached && videoPlane) {
-                            // Reanclar el video al marcador
-                            arTarget.appendChild(videoPlane);
-                            isVideoDetached = false;
-                            console.log('Video reanclado al marcador');
-                        }
                     });
                     
                     // Evento cuando se pierde el marcador
                     arTarget.addEventListener('targetLost', () => {
-                        console.log('Marcador perdido, pero manteniendo video visible...');
+                        console.log('Marcador perdido - Mostrando video fijo en pantalla');
                         
-                        // Si hay un plano de video visible
-                        if (videoPlane && videoPlane.object3D && videoPlane.object3D.visible) {
-                            // Obtener la posición y rotación actual del marcador
-                            const targetPosition = arTarget.object3D.position.clone();
-                            const targetRotation = arTarget.object3D.rotation.clone();
-                            
-                            // Guardar la última posición conocida
-                            lastKnownPosition = targetPosition;
-                            lastKnownRotation = targetRotation;
-                            
-                            // Separar el plano de video del marcador
-                            const scene = document.querySelector('a-scene');
-                            scene.appendChild(videoPlane);
-                            
-                            // Mantener el video en la misma posición/rotación
-                            videoPlane.object3D.position.copy(targetPosition);
-                            videoPlane.object3D.rotation.copy(targetRotation);
-                            
-                            isVideoDetached = true;
-                            console.log('Video separado y mantenido en posición');
-                            
-                            // Continuar reproduciendo el video
-                            if (video.paused) {
-                                video.play().catch(e => {
-                                    console.log('Error al reanudar video:', e);
-                                });
-                            }
-                        }
+                        // Obtener el tiempo actual del video AR
+                        const currentTime = video.currentTime;
+                        
+                        // Pausar el video AR
+                        video.pause();
+                        
+                        // Configurar y mostrar el video overlay
+                        overlayVideo.currentTime = currentTime;
+                        overlayVideo.muted = isMuted;
+                        
+                        // Mostrar el overlay
+                        videoOverlay.style.display = 'flex';
+                        
+                        // Reproducir el video overlay
+                        overlayVideo.play().catch(e => {
+                            console.log('Error al reproducir overlay:', e);
+                            overlayVideo.muted = true;
+                            overlayVideo.play();
+                        });
+                        
+                        // Ocultar el botón de sonido mientras el overlay está visible
+                        soundToggle.style.display = 'none';
                     });
                     
                     // Botón de sonido
@@ -1220,15 +1293,53 @@
                         }, 100);
                     });
                     
-                    // Asegurarse de que el video se siga reproduciendo
-                    setInterval(() => {
-                        if (video.paused && (arTarget.getAttribute('visible') || isVideoDetached)) {
-                            console.log('Video pausado pero debería estar reproduciéndose, reanudando...');
+                    // Botón para cerrar el video overlay
+                    closeVideoBtn.addEventListener('click', () => {
+                        videoOverlay.style.display = 'none';
+                        overlayVideo.pause();
+                        
+                        // Volver a mostrar el botón de sonido
+                        soundToggle.style.display = 'flex';
+                        
+                        // Si el marcador está visible, reanudar el video AR
+                        if (arTarget.getAttribute('visible')) {
                             video.play().catch(e => {
-                                console.log('Error al reanudar:', e);
+                                video.muted = true;
+                                video.play();
                             });
                         }
-                    }, 1000);
+                    });
+                    
+                    // Cerrar el overlay si se toca fuera del video
+                    videoOverlay.addEventListener('click', (e) => {
+                        if (e.target === videoOverlay) {
+                            videoOverlay.style.display = 'none';
+                            overlayVideo.pause();
+                            
+                            // Volver a mostrar el botón de sonido
+                            soundToggle.style.display = 'flex';
+                            
+                            // Si el marcador está visible, reanudar el video AR
+                            if (arTarget.getAttribute('visible')) {
+                                video.play().catch(e => {
+                                    video.muted = true;
+                                    video.play();
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Sincronizar el estado de mute entre los videos
+                    video.addEventListener('volumechange', () => {
+                        isMuted = video.muted;
+                        overlayVideo.muted = isMuted;
+                        
+                        if (isMuted) {
+                            soundToggle.textContent = t.soundOff;
+                        } else {
+                            soundToggle.textContent = t.soundOn;
+                        }
+                    });
                 }
             }, 100);
         }
