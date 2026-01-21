@@ -484,7 +484,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 1003;
         }
 
@@ -679,7 +679,7 @@
                 ℹ️ La cámara solo se usa para la experiencia AR. No grabamos ni almacenamos video.
             </div>
         </div>
-    </div>
+</div>
 
     <!-- Pantalla de carga (dinámica según idioma) -->
     <div class="loading-screen" id="loadingScreen">
@@ -1168,6 +1168,13 @@
                 overlayVideo.loop = true;
                 overlayVideo.muted = true;
                 
+                // Asegurar que el video overlay se reproduzca en loop
+                overlayVideo.addEventListener('ended', function() {
+                    console.log('Video overlay terminado, reiniciando...');
+                    this.currentTime = 0;
+                    this.play();
+                });
+                
                 // Mostrar escena AR
                 setTimeout(() => {
                     arScene.style.display = 'block';
@@ -1231,13 +1238,7 @@
                         // Asegurar loop continuo
                         video.loop = true;
                         
-                        // Guardar el tiempo actual del video
-                        const currentTime = video.currentTime;
-                        
-                        // Configurar el video overlay para que esté sincronizado
-                        overlayVideo.currentTime = currentTime;
-                        
-                        // Escuchar cuando el video termine
+                        // Escuchar cuando el video termine para reiniciarlo
                         video.addEventListener('ended', () => {
                             console.log('Video AR terminado, reiniciando...');
                             video.currentTime = 0;
@@ -1258,6 +1259,7 @@
                         // Configurar y mostrar el video overlay
                         overlayVideo.currentTime = currentTime;
                         overlayVideo.muted = isMuted;
+                        overlayVideo.loop = true; // Asegurar que esté en loop
                         
                         // Mostrar el overlay
                         videoOverlay.style.display = 'flex';
@@ -1271,12 +1273,20 @@
                         
                         // Ocultar el botón de sonido mientras el overlay está visible
                         soundToggle.style.display = 'none';
+                        
+                        // Asegurar que el overlay video se mantenga en loop
+                        overlayVideo.addEventListener('ended', function() {
+                            console.log('Video overlay terminado, reiniciando...');
+                            this.currentTime = 0;
+                            this.play();
+                        }, {once: false});
                     });
                     
                     // Botón de sonido
                     soundToggle.addEventListener('click', () => {
                         isMuted = !isMuted;
                         video.muted = isMuted;
+                        overlayVideo.muted = isMuted;
                         
                         if (isMuted) {
                             soundToggle.textContent = t.soundOff;
@@ -1329,17 +1339,24 @@
                         }
                     });
                     
-                    // Sincronizar el estado de mute entre los videos
-                    video.addEventListener('volumechange', () => {
-                        isMuted = video.muted;
-                        overlayVideo.muted = isMuted;
-                        
-                        if (isMuted) {
-                            soundToggle.textContent = t.soundOff;
-                        } else {
-                            soundToggle.textContent = t.soundOn;
+                    // Verificar periódicamente que los videos estén reproduciéndose
+                    setInterval(() => {
+                        // Verificar video AR si el marcador está visible
+                        if (arTarget.getAttribute('visible') && video.paused) {
+                            console.log('Video AR pausado pero marcador visible, reanudando...');
+                            video.play().catch(e => {
+                                console.log('Error al reanudar video AR:', e);
+                            });
                         }
-                    });
+                        
+                        // Verificar video overlay si está visible
+                        if (videoOverlay.style.display === 'flex' && overlayVideo.paused) {
+                            console.log('Video overlay pausado pero overlay visible, reanudando...');
+                            overlayVideo.play().catch(e => {
+                                console.log('Error al reanudar overlay:', e);
+                            });
+                        }
+                    }, 1000);
                 }
             }, 100);
         }
