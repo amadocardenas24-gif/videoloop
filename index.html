@@ -362,6 +362,27 @@
             text-shadow: 2px 2px 0 #1A535C;
         }
 
+        /* Mensaje de transición entre etapas */
+        .transition-message {
+            font-size: 1.5rem;
+            color: white;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 107, 107, 0.3);
+            border-radius: 15px;
+            border: 2px solid #FFE66D;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInOut 3s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.7; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
         /* Instrucciones en diferentes idiomas */
         .instructions-container {
             margin-top: 30px;
@@ -377,16 +398,16 @@
             position: absolute;
             text-align: center;
             opacity: 0;
-            animation: stepFade 12s infinite;
+            animation: stepFade 15s infinite;
         }
 
         .instruction-step:nth-child(1) { animation-delay: 0s; }
-        .instruction-step:nth-child(2) { animation-delay: 4s; }
-        .instruction-step:nth-child(3) { animation-delay: 8s; }
+        .instruction-step:nth-child(2) { animation-delay: 5s; }
+        .instruction-step:nth-child(3) { animation-delay: 10s; }
 
         @keyframes stepFade {
-            0%, 33% { opacity: 1; }
-            66%, 100% { opacity: 0; }
+            0%, 20% { opacity: 1; }
+            33%, 100% { opacity: 0; }
         }
 
         .instruction-icon {
@@ -429,6 +450,33 @@
             transition: all 0.3s ease;
         }
 
+        /* Botón de salir */
+        .exit-btn {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF3333, #FF6666);
+            border: 3px solid white;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1002;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .exit-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(255, 51, 51, 0.5);
+        }
+
         /* Instrucciones AR */
         .ar-instructions {
             position: fixed;
@@ -436,7 +484,7 @@
             left: 0;
             width: 100%;
             text-align: center;
-            z-index: 1002;
+            z-index: 1003;
             display: none;
         }
 
@@ -485,7 +533,7 @@
             justify-content: center;
             align-items: center;
             background: rgba(0, 0, 0, 0.9);
-            z-index: 1003;
+            z-index: 1004;
         }
 
         .video-container {
@@ -520,7 +568,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1004;
+            z-index: 1005;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
         }
@@ -565,6 +613,14 @@
                 right: 20px;
             }
             
+            .exit-btn {
+                width: 60px;
+                height: 60px;
+                top: 20px;
+                left: 20px;
+                font-size: 20px;
+            }
+            
             .instruction-icon {
                 font-size: 3rem;
             }
@@ -572,6 +628,11 @@
             .video-container {
                 width: 95%;
                 border-radius: 15px;
+            }
+            
+            .transition-message {
+                font-size: 1.2rem;
+                padding: 12px;
             }
         }
 
@@ -604,6 +665,11 @@
             
             .video-container {
                 max-width: 800px;
+            }
+            
+            .transition-message {
+                font-size: 1.1rem;
+                min-height: 60px;
             }
         }
     </style>
@@ -670,6 +736,10 @@
                 Esto nos permitirá mostrar contenido AR cuando apuntes a marcadores especiales.
             </div>
             
+            <div class="transition-message" id="transitionMessage1">
+                Prepárate para una experiencia tropical única... 🌺
+            </div>
+            
             <button class="permission-btn" id="allowCameraBtn">
                 <span class="btn-icon">✅</span>
                 <span id="permissionBtnText">PERMITIR CÁMARA</span>
@@ -679,7 +749,7 @@
                 ℹ️ La cámara solo se usa para la experiencia AR. No grabamos ni almacenamos video.
             </div>
         </div>
-</div>
+    </div>
 
     <!-- Pantalla de carga (dinámica según idioma) -->
     <div class="loading-screen" id="loadingScreen">
@@ -691,6 +761,10 @@
             <div class="loading-percentage" id="loadingPercentage">0%</div>
             <div class="loading-percentage" id="loadingText">Cargando...</div>
             
+            <div class="transition-message" id="transitionMessage2">
+                Preparando la experiencia AR mágica... ✨
+            </div>
+            
             <!-- Instrucciones según idioma -->
             <div class="instructions-container" id="instructionsContainer">
                 <!-- Las instrucciones se cargarán dinámicamente -->
@@ -700,6 +774,9 @@
 
     <!-- Botón de sonido -->
     <button class="sound-btn" id="soundToggle">🔇</button>
+    
+    <!-- Botón de salir -->
+    <button class="exit-btn" id="exitBtn">🚪</button>
     
     <!-- Instrucciones flotantes en AR -->
     <div class="ar-instructions" id="arInstructions">
@@ -739,6 +816,9 @@
                 permissionDescription: "Para disfrutar de esta experiencia de Realidad Aumentada, necesitamos acceso a tu cámara.<br><br>Esto nos permitirá mostrar contenido AR cuando apuntes a marcadores especiales.",
                 permissionBtn: "PERMITIR CÁMARA",
                 permissionNote: "ℹ️ La cámara solo se usa para la experiencia AR. No grabamos ni almacenamos video.",
+                transition1: "Prepárate para una experiencia tropical única... 🌺",
+                transition2: "Preparando la experiencia AR mágica... ✨",
+                transition3: "Casi listo... el video tropical está por comenzar... 🏝️",
                 
                 // Pantalla de carga
                 loadingTitle: "🌴 AR TROPICAL 🌺",
@@ -751,6 +831,20 @@
                     { icon: "🎬", text: "¡Disfruta el video AR!" }
                 ],
                 
+                // Mensajes aleatorios para entretener
+                funMessages: [
+                    "🌺 Descubriendo la magia tropical...",
+                    "🏝️ Cargando playas virtuales...",
+                    "🌴 Preparando palmeras digitales...",
+                    "🦜 Buscando loros virtuales...",
+                    "🌊 Generando olas AR...",
+                    "☀️ Cargando sol virtual...",
+                    "🐠 Preparando peces tropicales...",
+                    "🎶 Sincronizando sonidos del océano...",
+                    "🌈 Creando arcoíris digital...",
+                    "🍹 Mezclando cócteles virtuales..."
+                ],
+                
                 // Instrucciones AR
                 arInstruction: "Mueve lentamente sobre el marcador",
                 
@@ -760,15 +854,14 @@
                 processing: "SOLICITANDO...",
                 granted: "¡PERMITIDO!",
                 error: "ERROR - TOCA PARA REINTENTAR",
+                exitBtn: "🚪",
+                closeVideo: "Cerrar video",
                 errorMessages: {
                     denied: "El permiso fue denegado. Por favor, permite el acceso a la cámara en la configuración de tu navegador.",
                     noCamera: "No se encontró ninguna cámara.",
                     notSupported: "Tu navegador no soporta acceso a la cámara.",
                     unknown: "Error desconocido: "
-                },
-                // Nuevos textos para video overlay
-                closeVideo: "Cerrar video",
-                videoPlaying: "Video reproduciéndose..."
+                }
             },
             
             en: {
@@ -782,6 +875,9 @@
                 permissionDescription: "To enjoy this Augmented Reality experience, we need access to your camera.<br><br>This will allow us to show AR content when you point at special markers.",
                 permissionBtn: "ALLOW CAMERA",
                 permissionNote: "ℹ️ The camera is only used for the AR experience. We don't record or store video.",
+                transition1: "Get ready for a unique tropical experience... 🌺",
+                transition2: "Preparing the magical AR experience... ✨",
+                transition3: "Almost ready... the tropical video is about to start... 🏝️",
                 
                 // Loading screen
                 loadingTitle: "🌴 AR TROPICAL 🌺",
@@ -794,6 +890,20 @@
                     { icon: "🎬", text: "Enjoy the AR video!" }
                 ],
                 
+                // Fun messages to entertain
+                funMessages: [
+                    "🌺 Discovering tropical magic...",
+                    "🏝️ Loading virtual beaches...",
+                    "🌴 Preparing digital palm trees...",
+                    "🦜 Looking for virtual parrots...",
+                    "🌊 Generating AR waves...",
+                    "☀️ Loading virtual sun...",
+                    "🐠 Preparing tropical fish...",
+                    "🎶 Syncing ocean sounds...",
+                    "🌈 Creating digital rainbow...",
+                    "🍹 Mixing virtual cocktails..."
+                ],
+                
                 // AR Instructions
                 arInstruction: "Move slowly over the marker",
                 
@@ -803,15 +913,14 @@
                 processing: "PROCESSING...",
                 granted: "GRANTED!",
                 error: "ERROR - TAP TO RETRY",
+                exitBtn: "🚪",
+                closeVideo: "Close video",
                 errorMessages: {
                     denied: "Permission was denied. Please allow camera access in your browser settings.",
                     noCamera: "No camera found.",
                     notSupported: "Your browser doesn't support camera access.",
                     unknown: "Unknown error: "
-                },
-                // New texts for video overlay
-                closeVideo: "Close video",
-                videoPlaying: "Video playing..."
+                }
             },
             
             pt: {
@@ -825,6 +934,9 @@
                 permissionDescription: "Para desfrutar desta experiência de Realidade Aumentada, precisamos de acesso à sua câmera.<br><br>Isso nos permitirá mostrar conteúdo AR quando você apontar para marcadores especiais.",
                 permissionBtn: "PERMITIR CÂMERA",
                 permissionNote: "ℹ️ A câmera só é usada para a experiência AR. Não gravamos nem armazenamos vídeo.",
+                transition1: "Prepare-se para uma experiência tropical única... 🌺",
+                transition2: "Preparando a experiência AR mágica... ✨",
+                transition3: "Quase pronto... o vídeo tropical está prestes a começar... 🏝️",
                 
                 // Tela de carregamento
                 loadingTitle: "🌴 AR TROPICAL 🌺",
@@ -837,6 +949,20 @@
                     { icon: "🎬", text: "Aproveite o vídeo AR!" }
                 ],
                 
+                // Mensagens divertidas para entreter
+                funMessages: [
+                    "🌺 Descobrindo a magia tropical...",
+                    "🏝️ Carregando praias virtuais...",
+                    "🌴 Preparando palmeiras digitais...",
+                    "🦜 Procurando papagaios virtuais...",
+                    "🌊 Gerando ondas AR...",
+                    "☀️ Carregando sol virtual...",
+                    "🐠 Preparando peixes tropicais...",
+                    "🎶 Sincronizando sons do oceano...",
+                    "🌈 Criando arco-íris digital...",
+                    "🍹 Misturando coquetéis virtuais..."
+                ],
+                
                 // Instruções AR
                 arInstruction: "Mova-se lentamente sobre o marcador",
                 
@@ -846,21 +972,21 @@
                 processing: "PROCESSANDO...",
                 granted: "PERMITIDO!",
                 error: "ERRO - TOQUE PARA TENTAR NOVAMENTE",
+                exitBtn: "🚪",
+                closeVideo: "Fechar vídeo",
                 errorMessages: {
                     denied: "A permissão foi negada. Por favor, permita o acesso à câmera nas configurações do seu navegador.",
                     noCamera: "Nenhuma câmera encontrada.",
                     notSupported: "Seu navegador não suporta acesso à câmera.",
                     unknown: "Erro desconhecido: "
-                },
-                // Novos textos para video overlay
-                closeVideo: "Fechar vídeo",
-                videoPlaying: "Vídeo reproduzindo..."
+                }
             }
         };
         
         // Configuración actual
         let currentLang = 'es'; // Idioma por defecto
         let selectedLang = null;
+        let funMessageInterval = null;
         
         // =================== FUNCIONES DE IDIOMA ===================
         
@@ -897,6 +1023,7 @@
             document.getElementById('permissionDescription').innerHTML = t.permissionDescription;
             document.getElementById('permissionBtnText').textContent = t.permissionBtn;
             document.getElementById('permissionNote').textContent = t.permissionNote;
+            document.getElementById('transitionMessage1').textContent = t.transition1;
         }
         
         // Cargar idioma para pantalla de carga
@@ -905,6 +1032,7 @@
             
             document.getElementById('loadingTitle').textContent = t.loadingTitle;
             document.getElementById('loadingText').textContent = t.loadingText;
+            document.getElementById('transitionMessage2').textContent = t.transition2;
             
             // Cargar instrucciones
             const container = document.getElementById('instructionsContainer');
@@ -925,6 +1053,84 @@
                 <span class="icon">👉</span>
                 ${t.arInstruction}
             `;
+            
+            // Iniciar mensajes divertidos
+            startFunMessages(lang);
+        }
+        
+        // Iniciar mensajes divertidos durante la carga
+        function startFunMessages(lang) {
+            const t = translations[lang];
+            const loadingText = document.getElementById('loadingText');
+            let messageIndex = 0;
+            
+            // Limpiar intervalo anterior si existe
+            if (funMessageInterval) {
+                clearInterval(funMessageInterval);
+            }
+            
+            // Cambiar mensajes cada 3 segundos
+            funMessageInterval = setInterval(() => {
+                if (messageIndex >= t.funMessages.length) {
+                    messageIndex = 0;
+                }
+                loadingText.textContent = t.funMessages[messageIndex];
+                messageIndex++;
+            }, 3000);
+        }
+        
+        // Detener mensajes divertidos
+        function stopFunMessages() {
+            if (funMessageInterval) {
+                clearInterval(funMessageInterval);
+                funMessageInterval = null;
+            }
+        }
+        
+        // =================== BOTÓN DE SALIR ===================
+        
+        // Función para volver al inicio
+        function returnToLanguageScreen() {
+            const exitBtn = document.getElementById('exitBtn');
+            const permissionScreen = document.getElementById('cameraPermissionScreen');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const arScene = document.getElementById('ar-scene');
+            const videoOverlay = document.getElementById('videoOverlay');
+            const soundToggle = document.getElementById('soundToggle');
+            const arInstructions = document.getElementById('arInstructions');
+            
+            // Ocultar todas las pantallas
+            permissionScreen.style.opacity = '0';
+            loadingScreen.style.opacity = '0';
+            arScene.style.opacity = '0';
+            videoOverlay.style.display = 'none';
+            soundToggle.style.display = 'none';
+            arInstructions.style.display = 'none';
+            exitBtn.style.display = 'none';
+            
+            // Detener mensajes divertidos
+            stopFunMessages();
+            
+            // Pausar videos si están reproduciéndose
+            const overlayVideo = document.getElementById('overlayVideo');
+            if (overlayVideo) overlayVideo.pause();
+            
+            // Limpiar la escena AR
+            arScene.innerHTML = '';
+            
+            // Mostrar pantalla de idioma después de un breve retraso
+            setTimeout(() => {
+                permissionScreen.style.display = 'none';
+                loadingScreen.style.display = 'none';
+                arScene.style.display = 'none';
+                
+                const languageScreen = document.getElementById('languageScreen');
+                languageScreen.style.display = 'flex';
+                
+                setTimeout(() => {
+                    languageScreen.style.opacity = '1';
+                }, 100);
+            }, 500);
         }
         
         // =================== PANTALLA DE IDIOMA ===================
@@ -950,6 +1156,7 @@
         function proceedToPermissionScreen() {
             const languageScreen = document.getElementById('languageScreen');
             const permissionScreen = document.getElementById('cameraPermissionScreen');
+            const exitBtn = document.getElementById('exitBtn');
             
             // Cargar textos en el idioma seleccionado
             loadPermissionScreen(selectedLang);
@@ -960,6 +1167,7 @@
             setTimeout(() => {
                 languageScreen.style.display = 'none';
                 permissionScreen.style.display = 'flex';
+                exitBtn.style.display = 'flex';
                 
                 setTimeout(() => {
                     permissionScreen.style.opacity = '1';
@@ -1081,17 +1289,20 @@
                 loadingBar.style.width = progress + '%';
                 loadingPercentage.textContent = Math.round(progress) + '%';
                 
-                // Actualizar texto de carga
+                // Actualizar texto de carga con mensajes divertidos
                 if (progress < 30) {
-                    loadingText.textContent = t.loadingText;
+                    loadingText.textContent = t.funMessages[0];
                 } else if (progress < 70) {
-                    loadingText.textContent = t.instructions[1].text;
+                    loadingText.textContent = t.funMessages[Math.floor(progress / 10)];
                 } else {
-                    loadingText.textContent = t.instructions[2].text;
+                    loadingText.textContent = t.transition3;
                 }
                 
                 if (progress >= 100) {
                     clearInterval(interval);
+                    
+                    // Detener mensajes divertidos
+                    stopFunMessages();
                     
                     // Retardo antes de iniciar AR
                     setTimeout(() => {
@@ -1107,6 +1318,7 @@
         function initARScene() {
             const loadingScreen = document.getElementById('loadingScreen');
             const arScene = document.getElementById('ar-scene');
+            const exitBtn = document.getElementById('exitBtn');
             
             // Desvanecer pantalla de carga
             loadingScreen.style.opacity = '0';
@@ -1182,6 +1394,9 @@
                     setTimeout(() => {
                         arScene.style.opacity = '1';
                         
+                        // Mostrar botón de salir
+                        exitBtn.style.display = 'flex';
+                        
                         // Mostrar instrucciones AR
                         const arInstructions = document.getElementById('arInstructions');
                         arInstructions.style.display = 'block';
@@ -1212,6 +1427,7 @@
             const videoOverlay = document.getElementById('videoOverlay');
             const overlayVideo = document.getElementById('overlayVideo');
             const closeVideoBtn = document.getElementById('closeVideoBtn');
+            const exitBtn = document.getElementById('exitBtn');
             const t = translations[currentLang];
             let isMuted = true;
             
@@ -1339,6 +1555,9 @@
                         }
                     });
                     
+                    // Botón de salir
+                    exitBtn.addEventListener('click', returnToLanguageScreen);
+                    
                     // Verificar periódicamente que los videos estén reproduciéndose
                     setInterval(() => {
                         // Verificar video AR si el marcador está visible
@@ -1372,6 +1591,9 @@
             
             // Configurar botón de autorización
             document.getElementById('allowCameraBtn').addEventListener('click', requestCameraPermission);
+            
+            // Configurar botón de salir
+            document.getElementById('exitBtn').addEventListener('click', returnToLanguageScreen);
             
             // Intentar detectar idioma del navegador
             const browserLang = navigator.language.substring(0, 2);
