@@ -450,8 +450,8 @@
             transition: all 0.3s ease;
         }
 
-        /* Botón de salir */
-        .exit-btn {
+        /* Botón de salir de la experiencia */
+        .exit-experience-btn {
             position: fixed;
             top: 25px;
             left: 25px;
@@ -472,7 +472,7 @@
             display: none;
         }
 
-        .exit-btn:hover {
+        .exit-experience-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 8px 25px rgba(255, 51, 51, 0.5);
         }
@@ -577,6 +577,33 @@
             transform: scale(1.1);
         }
 
+        /* Botón de salir en pantalla completa */
+        .full-exit-btn {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF3333, #FF6666);
+            border: 3px solid white;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1006;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .full-exit-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(255, 51, 51, 0.5);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .language-title {
@@ -613,10 +640,18 @@
                 right: 20px;
             }
             
-            .exit-btn {
+            .exit-experience-btn {
                 width: 60px;
                 height: 60px;
                 top: 20px;
+                left: 20px;
+                font-size: 20px;
+            }
+            
+            .full-exit-btn {
+                width: 60px;
+                height: 60px;
+                bottom: 20px;
                 left: 20px;
                 font-size: 20px;
             }
@@ -775,8 +810,11 @@
     <!-- Botón de sonido -->
     <button class="sound-btn" id="soundToggle">🔇</button>
     
-    <!-- Botón de salir -->
-    <button class="exit-btn" id="exitBtn">🚪</button>
+    <!-- Botón de salir de la experiencia (esquina superior izquierda) -->
+    <button class="exit-experience-btn" id="exitExperienceBtn">🚪</button>
+    
+    <!-- Botón de salir completo (esquina inferior izquierda) -->
+    <button class="full-exit-btn" id="fullExitBtn">❌</button>
     
     <!-- Instrucciones flotantes en AR -->
     <div class="ar-instructions" id="arInstructions">
@@ -855,6 +893,7 @@
                 granted: "¡PERMITIDO!",
                 error: "ERROR - TOCA PARA REINTENTAR",
                 exitBtn: "🚪",
+                fullExitBtn: "❌",
                 closeVideo: "Cerrar video",
                 errorMessages: {
                     denied: "El permiso fue denegado. Por favor, permite el acceso a la cámara en la configuración de tu navegador.",
@@ -914,6 +953,7 @@
                 granted: "GRANTED!",
                 error: "ERROR - TAP TO RETRY",
                 exitBtn: "🚪",
+                fullExitBtn: "❌",
                 closeVideo: "Close video",
                 errorMessages: {
                     denied: "Permission was denied. Please allow camera access in your browser settings.",
@@ -973,6 +1013,7 @@
                 granted: "PERMITIDO!",
                 error: "ERRO - TOQUE PARA TENTAR NOVAMENTE",
                 exitBtn: "🚪",
+                fullExitBtn: "❌",
                 closeVideo: "Fechar vídeo",
                 errorMessages: {
                     denied: "A permissão foi negada. Por favor, permita o acesso à câmera nas configurações do seu navegador.",
@@ -1087,31 +1128,33 @@
             }
         }
         
-        // =================== BOTÓN DE SALIR ===================
+        // =================== BOTÓN DE SALIDA DE LA EXPERIENCIA ===================
         
-        // Función para volver al inicio
-        function returnToLanguageScreen() {
-            const exitBtn = document.getElementById('exitBtn');
+        // Función para salir completamente de la experiencia
+        function exitExperience() {
             const permissionScreen = document.getElementById('cameraPermissionScreen');
             const loadingScreen = document.getElementById('loadingScreen');
             const arScene = document.getElementById('ar-scene');
             const videoOverlay = document.getElementById('videoOverlay');
             const soundToggle = document.getElementById('soundToggle');
             const arInstructions = document.getElementById('arInstructions');
+            const exitExperienceBtn = document.getElementById('exitExperienceBtn');
+            const fullExitBtn = document.getElementById('fullExitBtn');
             
-            // Ocultar todas las pantallas
+            // Ocultar todas las pantallas y botones
             permissionScreen.style.opacity = '0';
             loadingScreen.style.opacity = '0';
             arScene.style.opacity = '0';
             videoOverlay.style.display = 'none';
             soundToggle.style.display = 'none';
             arInstructions.style.display = 'none';
-            exitBtn.style.display = 'none';
+            exitExperienceBtn.style.display = 'none';
+            fullExitBtn.style.display = 'none';
             
             // Detener mensajes divertidos
             stopFunMessages();
             
-            // Pausar videos si están reproduciéndose
+            // Pausar todos los videos
             const overlayVideo = document.getElementById('overlayVideo');
             if (overlayVideo) overlayVideo.pause();
             
@@ -1131,6 +1174,10 @@
                     languageScreen.style.opacity = '1';
                 }, 100);
             }, 500);
+            
+            // Mostrar mensaje de despedida
+            const t = translations[currentLang];
+            alert(t.exitMessage || "¡Gracias por usar AR Tropical! Esperamos verte pronto. 🌴");
         }
         
         // =================== PANTALLA DE IDIOMA ===================
@@ -1156,7 +1203,7 @@
         function proceedToPermissionScreen() {
             const languageScreen = document.getElementById('languageScreen');
             const permissionScreen = document.getElementById('cameraPermissionScreen');
-            const exitBtn = document.getElementById('exitBtn');
+            const exitExperienceBtn = document.getElementById('exitExperienceBtn');
             
             // Cargar textos en el idioma seleccionado
             loadPermissionScreen(selectedLang);
@@ -1167,7 +1214,7 @@
             setTimeout(() => {
                 languageScreen.style.display = 'none';
                 permissionScreen.style.display = 'flex';
-                exitBtn.style.display = 'flex';
+                exitExperienceBtn.style.display = 'flex';
                 
                 setTimeout(() => {
                     permissionScreen.style.opacity = '1';
@@ -1318,7 +1365,8 @@
         function initARScene() {
             const loadingScreen = document.getElementById('loadingScreen');
             const arScene = document.getElementById('ar-scene');
-            const exitBtn = document.getElementById('exitBtn');
+            const exitExperienceBtn = document.getElementById('exitExperienceBtn');
+            const fullExitBtn = document.getElementById('fullExitBtn');
             
             // Desvanecer pantalla de carga
             loadingScreen.style.opacity = '0';
@@ -1394,8 +1442,9 @@
                     setTimeout(() => {
                         arScene.style.opacity = '1';
                         
-                        // Mostrar botón de salir
-                        exitBtn.style.display = 'flex';
+                        // Mostrar botones de salida
+                        exitExperienceBtn.style.display = 'flex';
+                        fullExitBtn.style.display = 'flex';
                         
                         // Mostrar instrucciones AR
                         const arInstructions = document.getElementById('arInstructions');
@@ -1427,7 +1476,8 @@
             const videoOverlay = document.getElementById('videoOverlay');
             const overlayVideo = document.getElementById('overlayVideo');
             const closeVideoBtn = document.getElementById('closeVideoBtn');
-            const exitBtn = document.getElementById('exitBtn');
+            const exitExperienceBtn = document.getElementById('exitExperienceBtn');
+            const fullExitBtn = document.getElementById('fullExitBtn');
             const t = translations[currentLang];
             let isMuted = true;
             
@@ -1555,8 +1605,11 @@
                         }
                     });
                     
-                    // Botón de salir
-                    exitBtn.addEventListener('click', returnToLanguageScreen);
+                    // Botón de salida de la experiencia (esquina superior izquierda)
+                    exitExperienceBtn.addEventListener('click', exitExperience);
+                    
+                    // Botón de salida completo (esquina inferior izquierda)
+                    fullExitBtn.addEventListener('click', exitExperience);
                     
                     // Verificar periódicamente que los videos estén reproduciéndose
                     setInterval(() => {
@@ -1592,8 +1645,9 @@
             // Configurar botón de autorización
             document.getElementById('allowCameraBtn').addEventListener('click', requestCameraPermission);
             
-            // Configurar botón de salir
-            document.getElementById('exitBtn').addEventListener('click', returnToLanguageScreen);
+            // Configurar botones de salida
+            document.getElementById('exitExperienceBtn').addEventListener('click', exitExperience);
+            document.getElementById('fullExitBtn').addEventListener('click', exitExperience);
             
             // Intentar detectar idioma del navegador
             const browserLang = navigator.language.substring(0, 2);
