@@ -1028,6 +1028,7 @@
         let currentLang = 'es'; // Idioma por defecto
         let selectedLang = null;
         let funMessageInterval = null;
+        let videoLoopChecker = null;
         
         // =================== FUNCIONES DE IDIOMA ===================
         
@@ -1128,6 +1129,55 @@
             }
         }
         
+        // =================== SISTEMA DE LOOP PARA VIDEO ===================
+        
+        // Función para iniciar el verificador de loop del video
+        function startVideoLoopChecker() {
+            // Limpiar verificador anterior si existe
+            if (videoLoopChecker) {
+                clearInterval(videoLoopChecker);
+            }
+            
+            // Crear nuevo verificador que chequea cada segundo
+            videoLoopChecker = setInterval(() => {
+                const overlayVideo = document.getElementById('overlayVideo');
+                const videoOverlay = document.getElementById('videoOverlay');
+                
+                // Solo verificar si el overlay está visible
+                if (videoOverlay.style.display === 'flex' && overlayVideo) {
+                    // Si el video está cerca del final (último 0.5 segundos)
+                    if (overlayVideo.duration > 0 && 
+                        overlayVideo.currentTime >= overlayVideo.duration - 0.5) {
+                        console.log('Video cerca del final, reiniciando loop...');
+                        overlayVideo.currentTime = 0;
+                        overlayVideo.play().catch(e => {
+                            console.log('Error al reiniciar video:', e);
+                            overlayVideo.muted = true;
+                            overlayVideo.play();
+                        });
+                    }
+                    
+                    // Si el video está pausado pero debería estar reproduciéndose
+                    if (overlayVideo.paused) {
+                        console.log('Video pausado, reanudando...');
+                        overlayVideo.play().catch(e => {
+                            console.log('Error al reanudar video:', e);
+                            overlayVideo.muted = true;
+                            overlayVideo.play();
+                        });
+                    }
+                }
+            }, 1000); // Verificar cada segundo
+        }
+        
+        // Función para detener el verificador de loop
+        function stopVideoLoopChecker() {
+            if (videoLoopChecker) {
+                clearInterval(videoLoopChecker);
+                videoLoopChecker = null;
+            }
+        }
+        
         // =================== BOTÓN DE SALIDA DE LA EXPERIENCIA ===================
         
         // Función para salir completamente de la experiencia
@@ -1154,6 +1204,9 @@
             // Detener mensajes divertidos
             stopFunMessages();
             
+            // Detener verificador de loop
+            stopVideoLoopChecker();
+            
             // Pausar todos los videos
             const overlayVideo = document.getElementById('overlayVideo');
             if (overlayVideo) overlayVideo.pause();
@@ -1177,7 +1230,7 @@
             
             // Mostrar mensaje de despedida
             const t = translations[currentLang];
-            alert(t.exitMessage || "¡Gracias por usar AR Tropical! Esperamos verte pronto. 🌴");
+            alert("¡Gracias por usar AR Tropical! Esperamos verte pronto. 🌴");
         }
         
         // =================== PANTALLA DE IDIOMA ===================
@@ -1428,12 +1481,32 @@
                 overlayVideo.loop = true;
                 overlayVideo.muted = true;
                 
-                // Asegurar que el video overlay se reproduzca en loop
+                // Configurar event listeners para el video overlay
                 overlayVideo.addEventListener('ended', function() {
                     console.log('Video overlay terminado, reiniciando...');
                     this.currentTime = 0;
-                    this.play();
+                    this.play().catch(e => {
+                        console.log('Error al reiniciar video:', e);
+                        this.muted = true;
+                        this.play();
+                    });
                 });
+                
+                overlayVideo.addEventListener('pause', function() {
+                    // Si el overlay está visible y el video se pausa, reanudarlo
+                    const videoOverlay = document.getElementById('videoOverlay');
+                    if (videoOverlay.style.display === 'flex') {
+                        console.log('Video overlay pausado, reanudando...');
+                        this.play().catch(e => {
+                            console.log('Error al reanudar video:', e);
+                            this.muted = true;
+                            this.play();
+                        });
+                    }
+                });
+                
+                // Iniciar verificador de loop
+                startVideoLoopChecker();
                 
                 // Mostrar escena AR
                 setTimeout(() => {
@@ -1501,10 +1574,10 @@
                             video.play();
                         });
                         
-                        // Asegurar loop continuo
+                        // Configurar loop para video AR
                         video.loop = true;
                         
-                        // Escuchar cuando el video termine para reiniciarlo
+                        // Evento cuando termina el video AR
                         video.addEventListener('ended', () => {
                             console.log('Video AR terminado, reiniciando...');
                             video.currentTime = 0;
@@ -1525,7 +1598,7 @@
                         // Configurar y mostrar el video overlay
                         overlayVideo.currentTime = currentTime;
                         overlayVideo.muted = isMuted;
-                        overlayVideo.loop = true; // Asegurar que esté en loop
+                        overlayVideo.loop = true;
                         
                         // Mostrar el overlay
                         videoOverlay.style.display = 'flex';
@@ -1539,13 +1612,6 @@
                         
                         // Ocultar el botón de sonido mientras el overlay está visible
                         soundToggle.style.display = 'none';
-                        
-                        // Asegurar que el overlay video se mantenga en loop
-                        overlayVideo.addEventListener('ended', function() {
-                            console.log('Video overlay terminado, reiniciando...');
-                            this.currentTime = 0;
-                            this.play();
-                        }, {once: false});
                     });
                     
                     // Botón de sonido
@@ -1610,25 +1676,6 @@
                     
                     // Botón de salida completo (esquina inferior izquierda)
                     fullExitBtn.addEventListener('click', exitExperience);
-                    
-                    // Verificar periódicamente que los videos estén reproduciéndose
-                    setInterval(() => {
-                        // Verificar video AR si el marcador está visible
-                        if (arTarget.getAttribute('visible') && video.paused) {
-                            console.log('Video AR pausado pero marcador visible, reanudando...');
-                            video.play().catch(e => {
-                                console.log('Error al reanudar video AR:', e);
-                            });
-                        }
-                        
-                        // Verificar video overlay si está visible
-                        if (videoOverlay.style.display === 'flex' && overlayVideo.paused) {
-                            console.log('Video overlay pausado pero overlay visible, reanudando...');
-                            overlayVideo.play().catch(e => {
-                                console.log('Error al reanudar overlay:', e);
-                            });
-                        }
-                    }, 1000);
                 }
             }, 100);
         }
